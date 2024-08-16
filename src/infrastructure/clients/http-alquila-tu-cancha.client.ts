@@ -1,7 +1,7 @@
 import { HttpService } from '@nestjs/axios';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import * as moment from 'moment';
+import { formatDate } from 'date-fns';
 
 import { Club } from '../../domain/model/club';
 import { Court } from '../../domain/model/court';
@@ -46,7 +46,7 @@ export class HTTPAlquilaTuCanchaClient implements AlquilaTuCanchaClient {
     const { data: slots } = await this.api.get<Slot[]>(
       `/clubs/${clubId}/courts/${courtId}/slots`,
       {
-        params: { date: moment(date).format('YYYY-MM-DD') },
+        params: { date: formatDate(date, 'YYYY-MM-DD') },
       },
     );
 

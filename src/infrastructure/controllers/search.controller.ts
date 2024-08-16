@@ -1,6 +1,6 @@
 import { Controller, Get, Query, UsePipes } from '@nestjs/common';
 import { QueryBus } from '@nestjs/cqrs';
-import * as moment from 'moment';
+import { isValid, toDate } from 'date-fns';
 import { createZodDto, ZodValidationPipe } from 'nestjs-zod';
 import { z } from 'nestjs-zod/z';
 
@@ -14,8 +14,8 @@ const GetAvailabilitySchema = z.object({
   date: z
     .string()
     .regex(/\d{4}-\d{2}-\d{2}/)
-    .refine((date) => moment(date).isValid())
-    .transform((date) => moment(date).toDate()),
+    .refine((date) => isValid(date))
+    .transform((date) => toDate(date)),
 });
 
 class GetAvailabilityDTO extends createZodDto(GetAvailabilitySchema) {}
