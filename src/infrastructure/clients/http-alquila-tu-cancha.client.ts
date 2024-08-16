@@ -11,37 +11,47 @@ import { AlquilaTuCanchaClient } from '../../domain/ports/aquila-tu-cancha.clien
 @Injectable()
 export class HTTPAlquilaTuCanchaClient implements AlquilaTuCanchaClient {
   private base_url: string;
+  private api: HttpService['axiosRef'];
   constructor(private httpService: HttpService, config: ConfigService) {
     this.base_url = config.get<string>('ATC_BASE_URL', 'http://localhost:4000');
+
+    this.httpService.axiosRef.defaults.baseURL = this.base_url;
+
+    this.api = this.httpService.axiosRef;
   }
 
   async getClubs(placeId: string): Promise<Club[]> {
-    return this.httpService.axiosRef
-      .get('clubs', {
-        baseURL: this.base_url,
-        params: { placeId },
-      })
-      .then((res) => res.data);
+    const { data: clubs } = await this.api.get<Club[]>('clubs', {
+      params: { placeId },
+    });
+
+    if (!clubs) return [];
+
+    return clubs;
   }
 
-  getCourts(clubId: number): Promise<Court[]> {
-    return this.httpService.axiosRef
-      .get(`/clubs/${clubId}/courts`, {
-        baseURL: this.base_url,
-      })
-      .then((res) => res.data);
+  async getCourts(clubId: number): Promise<Court[]> {
+    const { data: courts } = await this.api.get(`/clubs/${clubId}/courts`);
+
+    if (!courts) return [];
+
+    return courts;
   }
 
-  getAvailableSlots(
+  async getAvailableSlots(
     clubId: number,
     courtId: number,
     date: Date,
   ): Promise<Slot[]> {
-    return this.httpService.axiosRef
-      .get(`/clubs/${clubId}/courts/${courtId}/slots`, {
-        baseURL: this.base_url,
+    const { data: slots } = await this.api.get<Slot[]>(
+      `/clubs/${clubId}/courts/${courtId}/slots`,
+      {
         params: { date: moment(date).format('YYYY-MM-DD') },
-      })
-      .then((res) => res.data);
+      },
+    );
+
+    if (!slots) return [];
+
+    return slots;
   }
 }
