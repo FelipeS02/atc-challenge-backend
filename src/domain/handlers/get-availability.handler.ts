@@ -20,27 +20,38 @@ export class GetAvailabilityHandler
   ) {}
 
   async execute(query: GetAvailabilityQuery): Promise<ClubWithAvailability[]> {
-    const clubs_with_availability: ClubWithAvailability[] = [];
+    // Get clubs by zone
     const clubs = await this.alquilaTuCanchaClient.getClubs(query.placeId);
-    for (const club of clubs) {
-      const courts = await this.alquilaTuCanchaClient.getCourts(club.id);
-      const courts_with_availability: ClubWithAvailability['courts'] = [];
-      for (const court of courts) {
-        const slots = await this.alquilaTuCanchaClient.getAvailableSlots(
-          club.id,
-          court.id,
-          query.date,
+
+    const clubsWithAvailability = await Promise.all(
+      clubs.map(async (club) => {
+        // Get courts static info
+        const courts = await this.alquilaTuCanchaClient.getCourts(club.id);
+
+        //#region Get courts with available time slots
+        const courtsWithAvailability = await Promise.all(
+          courts.map(async (court) => {
+            const slots = await this.alquilaTuCanchaClient.getAvailableSlots(
+              club.id,
+              court.id,
+              query.date,
+            );
+
+            return {
+              ...court,
+              available: slots,
+            };
+          }),
         );
-        courts_with_availability.push({
-          ...court,
-          available: slots,
-        });
-      }
-      clubs_with_availability.push({
-        ...club,
-        courts: courts_with_availability,
-      });
-    }
-    return clubs_with_availability;
+        //#endregion
+
+        return {
+          ...club,
+          courts: courtsWithAvailability,
+        };
+      }),
+    );
+
+    return clubsWithAvailability;
   }
 }
