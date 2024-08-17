@@ -2,6 +2,9 @@
 /dist
 /node_modules
 
+# Yarn cache
+.yarn
+
 # Logs
 logs
 *.log
