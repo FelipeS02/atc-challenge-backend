@@ -1,4 +1,5 @@
 import { formatDate, toDate } from 'date-fns';
+import { DATE_FORMAT } from 'src/infrastructure/constants/date';
 
 import { AlquilaTuCanchaClient } from '../../domain/ports/aquila-tu-cancha.client';
 import { GetAvailabilityQuery } from '../commands/get-availaiblity.query';
@@ -52,6 +53,6 @@ class FakeAlquilaTuCanchaClient implements AlquilaTuCanchaClient {
     courtId: number,
     date: Date,
   ): Promise<Slot[]> {
-    return this.slots[`${clubId}_${courtId}_${formatDate(date, 'YYYY-MM-DD')}`];
+    return this.slots[`${clubId}_${courtId}_${formatDate(date, DATE_FORMAT)}`];
   }
 }
