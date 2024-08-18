@@ -1,12 +1,23 @@
-import { Logger } from '@nestjs/common';
+import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
+import { Inject } from '@nestjs/common';
 import { EventsHandler, IEventHandler } from '@nestjs/cqrs';
 import { SlotBookedEvent } from 'src/domain/events/slot-booked.event';
+import { getSlotBookedFlagKey } from 'src/domain/helpers/cache-keys';
 
 @EventsHandler(SlotBookedEvent)
 export class SlotBookedHandler implements IEventHandler<SlotBookedEvent> {
-  private readonly logger = new Logger(SlotBookedHandler.name);
+  constructor(@Inject(CACHE_MANAGER) private cacheService: Cache) {}
 
-  handle(event: SlotBookedEvent) {
-    this.logger.log(`Club ${event.clubId} updated`);
+  async handle(e: SlotBookedEvent) {
+    if (!e.slot) return;
+
+    await this.cacheService.set(
+      getSlotBookedFlagKey(
+        e.clubId,
+        e.courtId,
+        e.slot.datetime.substring(0, 11),
+      ),
+      e.slot,
+    );
   }
 }

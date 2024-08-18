@@ -1,13 +1,35 @@
-import { Logger } from '@nestjs/common';
+import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
+import { Inject } from '@nestjs/common';
 import { EventsHandler, IEventHandler } from '@nestjs/cqrs';
 
 import { ClubUpdatedEvent } from '../../events/club-updated.event';
+import {
+  getClubAttrFlagKey,
+  getClubDisponibilityFlagKey,
+} from '../../helpers/cache-keys';
 
 @EventsHandler(ClubUpdatedEvent)
 export class ClubUpdatedHandler implements IEventHandler<ClubUpdatedEvent> {
-  private readonly logger = new Logger(ClubUpdatedHandler.name);
+  constructor(@Inject(CACHE_MANAGER) private cacheService: Cache) {}
 
-  handle(event: ClubUpdatedEvent) {
-    this.logger.log(`Club ${event.clubId} updated`);
+  async handle(e: ClubUpdatedEvent) {
+    let isOpenHoursChanged = false;
+    let isStaticAttrChanged = false;
+
+    if (!e.fields) return;
+
+    e.fields.forEach((f) => {
+      if (f === 'openhours') {
+        isOpenHoursChanged = true;
+        return;
+      }
+      isStaticAttrChanged = true;
+    });
+
+    if (isOpenHoursChanged)
+      await this.cacheService.set(getClubDisponibilityFlagKey(e.clubId), true);
+
+    if (isStaticAttrChanged)
+      await this.cacheService.set(getClubAttrFlagKey(e.clubId), true);
   }
 }
