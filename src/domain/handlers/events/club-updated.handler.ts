@@ -1,7 +1,7 @@
 import { Logger } from '@nestjs/common';
 import { EventsHandler, IEventHandler } from '@nestjs/cqrs';
 
-import { ClubUpdatedEvent } from '../events/club-updated.event';
+import { ClubUpdatedEvent } from '../../events/club-updated.event';
 
 @EventsHandler(ClubUpdatedEvent)
 export class ClubUpdatedHandler implements IEventHandler<ClubUpdatedEvent> {
