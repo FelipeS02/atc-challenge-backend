@@ -1,5 +1,6 @@
 import { Body, Controller, Post } from '@nestjs/common';
 import { EventBus } from '@nestjs/cqrs';
+import { isMatch } from 'date-fns';
 import { UseZodGuard } from 'nestjs-zod';
 import { z } from 'nestjs-zod/z';
 
@@ -7,11 +8,12 @@ import { ClubUpdatedEvent } from '../../domain/events/club-updated.event';
 import { CourtUpdatedEvent } from '../../domain/events/court-updated.event';
 import { SlotBookedEvent } from '../../domain/events/slot-booked.event';
 import { SlotCanceledEvent } from '../../domain/events/slot-cancelled.event';
+import { DATE_HOUR_FORMAT } from '../constants/date';
 
 const SlotSchema = z.object({
   price: z.number(),
   duration: z.number(),
-  datetime: z.string(),
+  datetime: z.string().refine((d) => isMatch(d, DATE_HOUR_FORMAT)),
   start: z.string(),
   end: z.string(),
   _priority: z.number(),
