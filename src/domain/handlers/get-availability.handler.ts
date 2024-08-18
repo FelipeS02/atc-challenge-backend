@@ -22,9 +22,9 @@ export class GetAvailabilityHandler
 {
   constructor(
     @Inject(ALQUILA_TU_CANCHA_CLIENT)
+    private client: AlquilaTuCanchaClient,
     @Inject(CACHE_MANAGER)
     private cacheService: Cache,
-    private client: AlquilaTuCanchaClient,
   ) {}
 
   async execute(query: GetAvailabilityQuery): Promise<ClubWithAvailability[]> {
