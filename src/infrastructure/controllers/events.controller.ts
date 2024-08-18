@@ -6,7 +6,7 @@ import { z } from 'nestjs-zod/z';
 import { ClubUpdatedEvent } from '../../domain/events/club-updated.event';
 import { CourtUpdatedEvent } from '../../domain/events/court-updated.event';
 import { SlotBookedEvent } from '../../domain/events/slot-booked.event';
-import { SlotAvailableEvent } from '../../domain/events/slot-cancelled.event';
+import { SlotCanceledEvent } from '../../domain/events/slot-cancelled.event';
 
 const SlotSchema = z.object({
   price: z.number(),
@@ -60,7 +60,7 @@ export class EventsController {
         break;
       case 'booking_cancelled':
         this.eventBus.publish(
-          new SlotAvailableEvent(
+          new SlotCanceledEvent(
             externalEvent.clubId,
             externalEvent.courtId,
             externalEvent.slot,
