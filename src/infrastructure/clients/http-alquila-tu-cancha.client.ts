@@ -23,21 +23,15 @@ export class HTTPAlquilaTuCanchaClient implements AlquilaTuCanchaClient {
   }
 
   async getClubs(placeId: string): Promise<Club[]> {
-    // Get clubs from API
     const { data: clubs } = await this.api.get<Club[]>('clubs', {
       params: { placeId },
     });
 
-    if (!clubs) return [];
-
     return clubs;
-    //#endregion
   }
 
   async getCourts(clubId: number): Promise<Court[]> {
     const { data: courts } = await this.api.get(`/clubs/${clubId}/courts`);
-
-    if (!courts) return [];
 
     return courts;
   }
@@ -54,8 +48,20 @@ export class HTTPAlquilaTuCanchaClient implements AlquilaTuCanchaClient {
       },
     );
 
-    if (!slots) return [];
-
     return slots;
+  }
+
+  async getClubById(clubId: number): Promise<Club> {
+    const { data: club } = await this.api.get<Club>(`/clubs/${clubId}`);
+
+    return club;
+  }
+
+  async getCourtById(clubId: number, courtId: number): Promise<Court> {
+    const { data: court } = await this.api.get<Court>(
+      `/clubs/${clubId}/courts/${courtId}`,
+    );
+
+    return court;
   }
 }

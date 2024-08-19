@@ -33,7 +33,7 @@ export class SearchController {
   constructor(private queryBus: QueryBus) {}
 
   @UseInterceptors(CacheInterceptor) // Cache info from this EP
-  @CacheTTL(30000) // Time to expire cache data
+  @CacheTTL(10000) // Time to expire cache data
   @Get()
   @UsePipes(ZodValidationPipe)
   searchAvailability(

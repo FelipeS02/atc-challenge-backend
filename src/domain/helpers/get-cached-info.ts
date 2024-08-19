@@ -1,14 +1,23 @@
 import { Cache } from '@nestjs/cache-manager';
+import { format, isBefore, isEqual } from 'date-fns';
+import { DATE_FORMAT } from 'src/infrastructure/constants/date';
 
 import { Club } from '../model/club';
 import { Court } from '../model/court';
 import { Slot } from '../model/slot';
 import { AlquilaTuCanchaClient } from '../ports/aquila-tu-cancha.client';
 import {
+  getClubAttrFlagKey,
+  getClubDisponibilityFlagKey,
   getClubsByZoneCacheKey,
+  getCourtAttrFlagKey,
   getCourtsCacheKey,
+  getSlotBookedFlagKey,
   getSlotCacheKey,
+  getSlotCanceledFlagKey,
 } from './cache-keys';
+import { parseSlotDatetime } from './date';
+import { insertIntoSlotsList } from './slots';
 
 export const getCachedClubs = async (
   placeId: string,
@@ -18,7 +27,24 @@ export const getCachedClubs = async (
   const cacheKey = getClubsByZoneCacheKey(placeId);
   const cachedClubs = await cacheService.get<Club[]>(cacheKey);
 
-  if (cachedClubs) return cachedClubs;
+  if (cachedClubs) {
+    // If clubs are cached
+    const updatedCachedClubs = await Promise.all(
+      cachedClubs.map(async (c) => {
+        // Verify if club is updated by event
+        const isClubUpdated = await cacheService.get(getClubAttrFlagKey(c.id));
+        if (!isClubUpdated) return c;
+
+        // If updated get new details from API
+        return await client.getClubById(c.id);
+      }),
+    );
+
+    // Update info in cache
+    await cacheService.set(cacheKey, updatedCachedClubs);
+
+    return updatedCachedClubs;
+  }
 
   const newClubs = await client.getClubs(placeId);
 
@@ -35,7 +61,21 @@ export const getCachedCourts = async (
   const cacheKey = getCourtsCacheKey(clubId);
   const cachedCourts = await cacheService.get<Court[]>(cacheKey);
 
-  if (cachedCourts) return cachedCourts;
+  if (cachedCourts) {
+    const updatedCacheCourts = await Promise.all(
+      cachedCourts.map(async (c) => {
+        const isCourtUpdated = getCourtAttrFlagKey(clubId, c.id);
+
+        if (!isCourtUpdated) return c;
+
+        return await client.getCourtById(clubId, c.id);
+      }),
+    );
+
+    await cacheService.set(cacheKey, updatedCacheCourts);
+
+    return updatedCacheCourts;
+  }
 
   const newCourts = await client.getCourts(clubId);
 
@@ -51,10 +91,55 @@ export const getCachedSlots = async (
   cacheService: Cache,
   client: AlquilaTuCanchaClient,
 ): Promise<Slot[]> => {
+  const isClubDisponibilityChanged = getClubDisponibilityFlagKey(clubId);
   const cacheKey = getSlotCacheKey(clubId, courtId, date);
-  const cachedSlots = await cacheService.get<Slot[]>(cacheKey);
 
-  if (cachedSlots) return cachedSlots;
+  if (!isClubDisponibilityChanged) {
+    let cachedSlots = await cacheService.get<Slot[]>(cacheKey);
+
+    if (cachedSlots) {
+      const formatedDate = format(date, DATE_FORMAT);
+
+      const bookedSlot = await cacheService.get<Slot>(
+        getSlotBookedFlagKey(clubId, courtId, formatedDate),
+      );
+
+      const availableSlot = await cacheService.get<Slot>(
+        getSlotCanceledFlagKey(clubId, courtId, formatedDate),
+      );
+
+      if (bookedSlot) {
+        cachedSlots = cachedSlots.filter(
+          (s) =>
+            !isEqual(
+              parseSlotDatetime(s.datetime),
+              parseSlotDatetime(bookedSlot.datetime),
+            ),
+        );
+      }
+
+      if (availableSlot) {
+        const indexToInsert = cachedSlots.findIndex((s) =>
+          isBefore(
+            parseSlotDatetime(availableSlot.datetime),
+            parseSlotDatetime(s.datetime),
+          ),
+        );
+
+        if (indexToInsert !== -1) {
+          cachedSlots = insertIntoSlotsList(
+            availableSlot,
+            indexToInsert,
+            cachedSlots,
+          );
+        }
+      }
+
+      await cacheService.set(cacheKey, cachedSlots);
+
+      return cachedSlots;
+    }
+  }
 
   const newSlots = await client.getAvailableSlots(clubId, courtId, date);
 

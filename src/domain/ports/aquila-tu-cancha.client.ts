@@ -11,4 +11,6 @@ export interface AlquilaTuCanchaClient {
     courtId: number,
     date: Date,
   ): Promise<Slot[]>;
+  getClubById(clubId: number): Promise<Club>;
+  getCourtById(clubId: number, courtId: number): Promise<Court>;
 }
