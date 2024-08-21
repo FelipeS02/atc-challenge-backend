@@ -1,25 +1,24 @@
-version: '3.7'
 services:
   api:
-    image: atc-challenge:dev
     build:
-      dockerfile: Dockerfile
       context: .
-      target: development
-    volumes:
-      - .:/usr/src/app
-    command: npm run start:dev
+      dockerfile: Dockerfile
+      target: production
     ports:
-      - 3000:3000
+      - '3000:3000'
     environment:
       ATC_BASE_URL: http://mock:4000
+
   mock:
-    image: atc-challenge:dev
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: development
     command: node /usr/src/app/mock/server.js
     volumes:
       - ./mock:/usr/src/app/mock
     ports:
-      - 4000:4000
+      - '4000:4000'
     environment:
       EVENT_INTERVAL_SECONDS: 10
       REQUESTS_PER_MINUTE: 60

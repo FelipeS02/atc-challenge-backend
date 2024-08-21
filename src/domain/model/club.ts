@@ -1,4 +1,5 @@
 import { Slot } from './slot';
+import { ZoneCountry } from './zone';
 
 export interface ClubLocation {
   name: string;
@@ -7,18 +8,12 @@ export interface ClubLocation {
   lng: string;
 }
 
-export interface ClubCountry {
-  id: number;
-  name: string;
-  iso_code: string;
-}
-
 export interface ClubZone {
   id: number;
   name: string;
   full_name: string;
   placeid: string;
-  country: ClubCountry;
+  country: ZoneCountry;
 }
 
 export interface ClubProps {

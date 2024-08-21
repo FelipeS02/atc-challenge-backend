@@ -17,7 +17,7 @@ export interface CourtSport {
   pivot: {
     court_id: number;
     sport_id: number;
-    enabled: boolean;
+    enabled: number;
   };
 }
 

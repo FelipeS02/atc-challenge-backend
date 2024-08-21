@@ -1,52 +1,40 @@
-###################
-# BUILD FOR LOCAL DEVELOPMENT
-###################
-
-FROM node:16.17-alpine As development
+# Stage 1: Development
+FROM node:16.17.0 AS development
 
 WORKDIR /usr/src/app
 
 COPY --chown=node:node package.json yarn.lock ./
 
-RUN yarn
+RUN yarn install
 
 COPY --chown=node:node . .
 
 USER node
 
-###################
-# BUILD FOR PRODUCTION
-###################
-
-FROM node:16.7-alpine As build
+# Stage 2: Build
+FROM node:16.17.0 AS build
 
 WORKDIR /usr/src/app
 
 COPY --chown=node:node package.json yarn.lock ./
 
-# In order to run `yarn build` we need access to the Nest CLI.
-# The Nest CLI is a dev dependency,
-# In the previous development stage we ran `yarn` which installed all dependencies.
-# So we can copy over the node_modules directory from the development image into this build image.
+# Copy node_modules from the development stage
 COPY --chown=node:node --from=development /usr/src/app/node_modules ./node_modules
 
 COPY --chown=node:node . .
 
 RUN yarn build
 
-ENV NODE_ENV production
+# Stage 3: Production
+FROM node:16.17.0 AS production
 
-RUN yarn --production
+WORKDIR /usr/src/app
 
-USER node
-
-###################
-# PRODUCTION
-###################
-
-FROM node:16.7-alpine As production
-
-COPY --chown=node:node --from=build /usr/src/app/node_modules ./node_modules
 COPY --chown=node:node --from=build /usr/src/app/dist ./dist
+COPY --chown=node:node package.json yarn.lock ./
 
-CMD [ "node", "dist/main.js" ]
+RUN yarn install --production
+
+ENV NODE_ENV=production
+
+CMD ["node", "dist/main"]

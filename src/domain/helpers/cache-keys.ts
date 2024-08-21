@@ -2,6 +2,11 @@ import { format } from 'date-fns';
 
 import { DATE_FORMAT } from '../../infrastructure/constants/date';
 
+export const getFallbackClubsKey = (placeId: string, date: string) =>
+  `date[${date}]-zone[${placeId}]-available_clubs-fallback`;
+
+export const getZonesCacheKey = () => `zones`;
+
 export const getClubsByZoneCacheKey = (placeId: string) =>
   `zone[${placeId}]-clubs`;
 

@@ -40,9 +40,8 @@ export default [
       sourceType: 'module',
 
       parserOptions: {
-        project: 'tsconfig.json',
-        tsconfigRootDir:
-          'C:\\Users\\Proyectos\\alquilatucancha-backend-challenge-master',
+        project: path.resolve(__dirname, 'tsconfig.json'),
+        tsconfigRootDir: __dirname,
       },
     },
 

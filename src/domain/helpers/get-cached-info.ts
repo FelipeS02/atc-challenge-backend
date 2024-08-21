@@ -1,11 +1,12 @@
 import { Cache } from '@nestjs/cache-manager';
 import { format, isBefore, isEqual } from 'date-fns';
-import { DATE_FORMAT } from 'src/infrastructure/constants/date';
 
+import { DATE_FORMAT } from '../../infrastructure/constants/date';
 import { Club } from '../model/club';
 import { Court } from '../model/court';
 import { Slot } from '../model/slot';
-import { AlquilaTuCanchaClient } from '../ports/aquila-tu-cancha.client';
+import { Zone } from '../model/zone';
+import { IAlquilaTuCanchaClient } from '../ports/aquila-tu-cancha.client';
 import {
   getClubAttrFlagKey,
   getClubDisponibilityFlagKey,
@@ -15,6 +16,7 @@ import {
   getSlotBookedFlagKey,
   getSlotCacheKey,
   getSlotCanceledFlagKey,
+  getZonesCacheKey,
 } from './cache-keys';
 import { parseSlotDatetime } from './date';
 import { insertIntoSlotsList } from './slots';
@@ -22,25 +24,25 @@ import { insertIntoSlotsList } from './slots';
 export const getCachedClubs = async (
   placeId: string,
   cacheService: Cache,
-  client: AlquilaTuCanchaClient,
+  client: IAlquilaTuCanchaClient,
 ): Promise<Club[]> => {
   const cacheKey = getClubsByZoneCacheKey(placeId);
   const cachedClubs = await cacheService.get<Club[]>(cacheKey);
 
   if (cachedClubs) {
-    // If clubs are cached
+    // Clubs en caché
     const updatedCachedClubs = await Promise.all(
       cachedClubs.map(async (c) => {
-        // Verify if club is updated by event
+        // Verificar si los datos se actualizaron en los eventos
         const isClubUpdated = await cacheService.get(getClubAttrFlagKey(c.id));
         if (!isClubUpdated) return c;
 
-        // If updated get new details from API
+        // Si se actualizó, obtener los nuevos datos
         return await client.getClubById(c.id);
       }),
     );
 
-    // Update info in cache
+    // Actualizar info en el caché
     await cacheService.set(cacheKey, updatedCachedClubs);
 
     return updatedCachedClubs;
@@ -56,7 +58,7 @@ export const getCachedClubs = async (
 export const getCachedCourts = async (
   clubId: Club['id'],
   cacheService: Cache,
-  client: AlquilaTuCanchaClient,
+  client: IAlquilaTuCanchaClient,
 ): Promise<Court[]> => {
   const cacheKey = getCourtsCacheKey(clubId);
   const cachedCourts = await cacheService.get<Court[]>(cacheKey);
@@ -89,7 +91,7 @@ export const getCachedSlots = async (
   courtId: Court['id'],
   date: Date,
   cacheService: Cache,
-  client: AlquilaTuCanchaClient,
+  client: IAlquilaTuCanchaClient,
 ): Promise<Slot[]> => {
   const isClubDisponibilityChanged = getClubDisponibilityFlagKey(clubId);
   const cacheKey = getSlotCacheKey(clubId, courtId, date);
@@ -146,4 +148,20 @@ export const getCachedSlots = async (
   if (newSlots) await cacheService.set(cacheKey, newSlots);
 
   return newSlots;
+};
+
+export const getCachedZones = async (
+  cacheService: Cache,
+  client: IAlquilaTuCanchaClient,
+) => {
+  const cacheKey = getZonesCacheKey();
+  const cachedZones = await cacheService.get<Zone[]>(cacheKey);
+
+  if (cachedZones) return cachedZones;
+
+  const newZones = await client.getZones();
+
+  await cacheService.set(cacheKey, newZones);
+
+  return newZones;
 };

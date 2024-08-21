@@ -1,20 +1,28 @@
 import { HttpService } from '@nestjs/axios';
+import { InjectQueue } from '@nestjs/bull';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { Queue } from 'bull';
 import { formatDate } from 'date-fns';
 
 import { Club } from '../../domain/model/club';
 import { Court } from '../../domain/model/court';
 import { Slot } from '../../domain/model/slot';
-import { AlquilaTuCanchaClient } from '../../domain/ports/aquila-tu-cancha.client';
+import { Zone } from '../../domain/model/zone';
+import { IAlquilaTuCanchaClient } from '../../domain/ports/aquila-tu-cancha.client';
 import { DATE_FORMAT } from '../constants/date';
+import { GET } from '../constants/petitions';
 
 @Injectable()
-export class HTTPAlquilaTuCanchaClient implements AlquilaTuCanchaClient {
+export class HTTPAlquilaTuCanchaClient implements IAlquilaTuCanchaClient {
   private base_url: string;
   private api: HttpService['axiosRef'];
 
-  constructor(private httpService: HttpService, config: ConfigService) {
+  constructor(
+    private httpService: HttpService,
+    config: ConfigService,
+    @InjectQueue('apiRequests') private readonly apiQueue: Queue,
+  ) {
     this.base_url = config.get<string>('ATC_BASE_URL', 'http://localhost:4000');
 
     this.httpService.axiosRef.defaults.baseURL = this.base_url;
@@ -23,15 +31,32 @@ export class HTTPAlquilaTuCanchaClient implements AlquilaTuCanchaClient {
   }
 
   async getClubs(placeId: string): Promise<Club[]> {
-    const { data: clubs } = await this.api.get<Club[]>('clubs', {
-      params: { placeId },
-    });
+    try {
+      const job = await this.apiQueue.add('api-call', {
+        endpoint: `${this.base_url}/clubs`,
+        params: { placeId },
+        method: GET,
+      });
 
-    return clubs;
+      const clubs = await job.finished();
+
+      return clubs;
+    } catch (error) {
+      console.log('error: ', error);
+      const errRes: Club[] = [];
+      return errRes;
+    }
   }
 
   async getCourts(clubId: number): Promise<Court[]> {
-    const { data: courts } = await this.api.get(`/clubs/${clubId}/courts`);
+    console.log('entre 2');
+    const job = await this.apiQueue.add('api-call', {
+      endpoint: `${this.base_url}/clubs/${clubId}/courts`,
+      params: { clubId },
+      method: GET,
+    });
+
+    const courts = await job.finished();
 
     return courts;
   }
@@ -41,12 +66,21 @@ export class HTTPAlquilaTuCanchaClient implements AlquilaTuCanchaClient {
     courtId: number,
     date: Date,
   ): Promise<Slot[]> {
-    const { data: slots } = await this.api.get<Slot[]>(
-      `/clubs/${clubId}/courts/${courtId}/slots`,
-      {
-        params: { date: formatDate(date, DATE_FORMAT) },
-      },
-    );
+    console.log('entre 3');
+    const job = await this.apiQueue.add('api-call', {
+      endpoint: `${this.base_url}/clubs/${clubId}/courts/${courtId}/slots`,
+      params: { date: formatDate(date, DATE_FORMAT) },
+      method: GET,
+    });
+
+    // const { data: slots } = await this.api.get<Slot[]>(
+    //   `/clubs/${clubId}/courts/${courtId}/slots`,
+    //   {
+    //     params: { date: formatDate(date, DATE_FORMAT) },
+    //   },
+    // );
+
+    const slots = await job.finished();
 
     return slots;
   }
@@ -63,5 +97,11 @@ export class HTTPAlquilaTuCanchaClient implements AlquilaTuCanchaClient {
     );
 
     return court;
+  }
+
+  async getZones(): Promise<Zone[]> {
+    const { data: zones } = await this.api.get<Zone[]>('/zones');
+
+    return zones;
   }
 }

@@ -1,12 +1,13 @@
+// import { ClubUpdatedEvent } from '../domain/events/club-updated.event';
 import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Inject } from '@nestjs/common';
 import { EventsHandler, IEventHandler } from '@nestjs/cqrs';
 
-import { ClubUpdatedEvent } from '../../events/club-updated.event';
+import { ClubUpdatedEvent } from '../../../domain/events/club-updated.event';
 import {
   getClubAttrFlagKey,
   getClubDisponibilityFlagKey,
-} from '../../helpers/cache-keys';
+} from '../../../domain/helpers/cache-keys';
 
 @EventsHandler(ClubUpdatedEvent)
 export class ClubUpdatedHandler implements IEventHandler<ClubUpdatedEvent> {
