@@ -1,4 +1,4 @@
-import { Slot } from '../model/slot';
+import { Slot } from '../../infrastructure/models/slot';
 
 export const insertIntoSlotsList = (
   slot: Slot,

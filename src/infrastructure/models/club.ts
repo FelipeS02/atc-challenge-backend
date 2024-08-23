@@ -1,4 +1,3 @@
-import { Slot } from './slot';
 import { ZoneCountry } from './zone';
 
 export interface ClubLocation {
@@ -40,11 +39,10 @@ export interface Club {
   logo_url: string;
   background: string;
   background_url: string;
-  location: Location;
+  location: ClubLocation;
   zone: ClubZone;
   props: ClubProps;
   attributes: ClubAttributes;
-  openHours: ClubOpenHour[];
+  openhours: ClubOpenHour[];
   _priority: number;
-  available: Slot[];
 }
