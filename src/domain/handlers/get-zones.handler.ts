@@ -1,29 +1,22 @@
-import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
-import { Inject } from '@nestjs/common';
+import { Logger } from '@nestjs/common';
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 
+import { ZonesService } from '../../application/services/atc-client-service/zones.service';
+import { Zone } from '../../infrastructure/models/zone';
 import { GetZonesQuery } from '../commands/get-zones.query';
-import { getCachedZones } from '../helpers/get-cached-info';
-import { Zone } from '../model/zone';
-import {
-  ALQUILA_TU_CANCHA_CLIENT,
-  IAlquilaTuCanchaClient,
-} from '../ports/aquila-tu-cancha.client';
 
 @QueryHandler(GetZonesQuery)
 export class GetZonesHandler implements IQueryHandler<GetZonesQuery> {
-  constructor(
-    @Inject(ALQUILA_TU_CANCHA_CLIENT)
-    private client: IAlquilaTuCanchaClient,
-    @Inject(CACHE_MANAGER) private cacheService: Cache,
-  ) {}
+  private readonly logger = new Logger(GetZonesHandler.name);
+  constructor(private readonly zonesService: ZonesService) {}
 
   async execute(): Promise<Zone[]> {
     try {
-      const zones = await getCachedZones(this.cacheService, this.client);
+      const zones = await this.zonesService.getCachedZones();
 
       return zones;
-    } catch {
+    } catch (error) {
+      this.logger.fatal(error);
       return [];
     }
   }

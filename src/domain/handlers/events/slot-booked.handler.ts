@@ -2,8 +2,8 @@ import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Inject } from '@nestjs/common';
 import { EventsHandler, IEventHandler } from '@nestjs/cqrs';
 
+import { getSlotBookedFlagKey } from '../../../application/helpers/cache-keys';
 import { SlotBookedEvent } from '../../../domain/events/slot-booked.event';
-import { getSlotBookedFlagKey } from '../../../domain/helpers/cache-keys';
 
 @EventsHandler(SlotBookedEvent)
 export class SlotBookedHandler implements IEventHandler<SlotBookedEvent> {

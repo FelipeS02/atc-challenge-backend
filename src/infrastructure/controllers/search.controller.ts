@@ -1,11 +1,4 @@
-import { CacheInterceptor, CacheTTL } from '@nestjs/cache-manager';
-import {
-  Controller,
-  Get,
-  Query,
-  UseInterceptors,
-  UsePipes,
-} from '@nestjs/common';
+import { Controller, Get, Query, UsePipes } from '@nestjs/common';
 import { QueryBus } from '@nestjs/cqrs';
 import { isMatch, toDate } from 'date-fns';
 import { createZodDto, ZodValidationPipe } from 'nestjs-zod';
@@ -32,8 +25,6 @@ class GetAvailabilityDTO extends createZodDto(GetAvailabilitySchema) {}
 export class SearchController {
   constructor(private queryBus: QueryBus) {}
 
-  @UseInterceptors(CacheInterceptor) // Cache info from this EP
-  @CacheTTL(10000) // Time to expire cache data
   @Get()
   @UsePipes(ZodValidationPipe)
   searchAvailability(
