@@ -29,15 +29,19 @@ export const ExternalEventSchema = z.union([
   z.object({
     type: z.literal('club_updated'),
     clubId: z.number().int(),
-    fields: z.array(
-      z.enum(['attributes', 'openhours', 'logo_url', 'background_url']),
-    ),
+    fields: z
+      .array(z.enum(['attributes', 'openhours', 'logo_url', 'background_url']))
+      // Events without fields are rejected
+      .refine((fields) => fields.length > 0),
   }),
   z.object({
     type: z.literal('court_updated'),
     clubId: z.number().int(),
     courtId: z.number().int(),
-    fields: z.array(z.enum(['attributes', 'name'])),
+    fields: z
+      .array(z.enum(['attributes', 'name']))
+      // Events without fields are rejected
+      .refine((fields) => fields.length > 0),
   }),
 ]);
 
