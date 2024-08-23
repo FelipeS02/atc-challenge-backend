@@ -25,11 +25,10 @@ export class ClubsService {
     const cachedClubs = await this.cacheService.get<Club[]>(cacheKey);
 
     if (cachedClubs) {
-      // Clubs en caché
       const updatedCachedClubs = await Promise.all(
         cachedClubs.map(async (c) => {
           const clubUpdatedFlagKey = getClubAttrFlagKey(c.id);
-          // Verificar si los datos se actualizaron en los eventos
+          // Verify if data is updated by events
           const isClubUpdated = await this.cacheService.get(clubUpdatedFlagKey);
 
           if (!isClubUpdated) return c;
@@ -42,12 +41,11 @@ export class ClubsService {
 
           await this.cacheService.del(clubUpdatedFlagKey);
 
-          // Si se actualizó, obtener los nuevos datos
           return newClubInfo;
         }),
       );
 
-      // Actualizar info en el caché
+      // Update info in cache
       await this.cacheService.set(cacheKey, updatedCachedClubs, 10 * 1000);
 
       return updatedCachedClubs;

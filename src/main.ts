@@ -11,6 +11,7 @@ async function bootstrap() {
     AppModule,
     new FastifyAdapter({ logger: false }),
   );
+
   await app.listen(3000);
 }
 bootstrap();
