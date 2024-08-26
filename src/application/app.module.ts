@@ -2,7 +2,7 @@ import { HttpModule } from '@nestjs/axios';
 import { BullModule } from '@nestjs/bull';
 import { CacheModule } from '@nestjs/cache-manager';
 import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { CqrsModule } from '@nestjs/cqrs';
 import * as redisStore from 'cache-manager-ioredis';
 
@@ -29,20 +29,29 @@ import { ZonesService } from './services/atc-client-service/zones.service';
     HttpModule,
     CqrsModule,
     ConfigModule.forRoot(),
-    CacheModule.register({
-      isGlobal: true,
-      store: redisStore,
-      host: 'localhost',
-      port: 6380,
+    // Cache config
+    CacheModule.registerAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: async (configService: ConfigService) => ({
+        store: redisStore,
+        host: configService.get<string>('REDIS_HOST'),
+        port: configService.get<number>('REDIS_PORT'),
+      }),
     }),
+
+    // Queue config
     BullModule.forRootAsync({
-      useFactory: () => ({
+      inject: [ConfigService],
+      imports: [ConfigModule],
+      useFactory: async (configService: ConfigService) => ({
         redis: {
-          host: 'localhost',
-          port: 6380,
+          host: configService.get<string>('REDIS_HOST'),
+          port: configService.get<number>('REDIS_PORT'),
         },
       }),
     }),
+
     BullModule.registerQueueAsync({
       name: ATC_CLIENT_QUEUE,
     }),

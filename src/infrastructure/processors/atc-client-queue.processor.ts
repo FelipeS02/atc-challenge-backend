@@ -1,6 +1,7 @@
 import { HttpService } from '@nestjs/axios';
 import { InjectQueue, Process, Processor } from '@nestjs/bull';
 import { Injectable, Logger } from '@nestjs/common';
+import { AxiosError } from 'axios';
 import { Job, Queue } from 'bull';
 
 import { ATC_CLIENT_JOB, ATC_CLIENT_QUEUE } from '../constants/queue';
@@ -48,26 +49,25 @@ export class ApiRequestProcessor {
 
       this.throttleDelayTotal = this.throttleDelayUnity;
 
-      const queueIsPaused = await this.queue.isPaused();
-      if (queueIsPaused) await this.queue.resume();
-
       return response.data;
     } catch (error) {
+      const { message = 'Unknown error' } = error as AxiosError;
+
+      await job.releaseLock();
+
       // Too many requests
       if (isApiLimitReached(error)) {
-        this.throttleDelayTotal += this.throttleDelayUnity;
-
-        this.logger.verbose(
-          `Job for ${endpoint} retrying in ${this.throttleDelayTotal / 1000}s`,
-        );
+        if (this.throttleDelayTotal < this.throttleDelayUnity * 4)
+          this.throttleDelayTotal += this.throttleDelayUnity;
 
         await this.handleRequestsThrottle();
 
-        if (job.attemptsMade > 3) await this.queue.pause();
-
-        await job.releaseLock();
         await job.retry();
       } else {
+        await job.moveToFailed({
+          message,
+        });
+
         throw error;
       }
     }

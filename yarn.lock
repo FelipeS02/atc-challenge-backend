@@ -2299,6 +2299,7 @@ __metadata:
     jest-when: 3.5.1
     nestjs-redis: ^1.3.3
     nestjs-zod: 1.2.1
+    node: ^22.7.0
     prettier: 2.3.2
     redis: ^4.7.0
     reflect-metadata: 0.1.13
@@ -5875,6 +5876,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"node-bin-setup@npm:^1.0.0":
+  version: 1.1.3
+  resolution: "node-bin-setup@npm:1.1.3"
+  checksum: ae09c036dde8133f5226dc984445a8bdecc9b56078fd091f9e243e3965e544275f4786054041db60cc4ebc2957a5e44e8f316dfc15d100f3988ee2d04661d4bf
+  languageName: node
+  linkType: hard
+
 "node-emoji@npm:1.11.0":
   version: 1.11.0
   resolution: "node-emoji@npm:1.11.0"
@@ -5942,6 +5950,17 @@ __metadata:
   version: 2.0.18
   resolution: "node-releases@npm:2.0.18"
   checksum: ef55a3d853e1269a6d6279b7692cd6ff3e40bc74947945101138745bfdc9a5edabfe72cb19a31a8e45752e1910c4c65c77d931866af6357f242b172b7283f5b3
+  languageName: node
+  linkType: hard
+
+"node@npm:^22.7.0":
+  version: 22.7.0
+  resolution: "node@npm:22.7.0"
+  dependencies:
+    node-bin-setup: ^1.0.0
+  bin:
+    node: bin/node
+  checksum: affc8bd3ec2b725417ccd49e051ca88f6e7d2a4018112728dac85856038b0069659185ee1c78805cf7604b898aca30e707c1f5a7ff6997b134931e99158ee2f8
   languageName: node
   linkType: hard
 
