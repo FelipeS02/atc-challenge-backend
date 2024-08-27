@@ -2,23 +2,30 @@
 # BUILD FOR LOCAL DEVELOPMENT
 ###################
 
-FROM node:16.17-alpine As development
+FROM node:22.0.0-alpine AS development
 
 WORKDIR /usr/src/app
 
 COPY --chown=node:node package.json yarn.lock ./
 
-RUN yarn
+RUN yarn install
 
 COPY --chown=node:node . .
 
+FROM redis
+
+COPY redis.conf /usr/local/etc/redis/redis.conf
+
+CMD [ "redis-server", "/usr/local/etc/redis/redis.conf" ]
+
 USER node
+
 
 ###################
 # BUILD FOR PRODUCTION
 ###################
 
-FROM node:16.7-alpine As build
+FROM node:22.0.0-alpine AS build
 
 WORKDIR /usr/src/app
 
@@ -44,7 +51,7 @@ USER node
 # PRODUCTION
 ###################
 
-FROM node:16.7-alpine As production
+FROM node:22.0.0-alpine AS production
 
 COPY --chown=node:node --from=build /usr/src/app/node_modules ./node_modules
 COPY --chown=node:node --from=build /usr/src/app/dist ./dist

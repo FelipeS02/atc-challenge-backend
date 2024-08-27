@@ -1,7 +1,25 @@
-version: '3.7'
 services:
+  redis:
+    image: 'redis:alpine'
+    container_name: 'redis-server'
+    ports:
+      - 6379:6379
+    volumes:
+      - redis_data:/data
+
+  redis-insight:
+    image: 'redis/redisinsight:latest'
+    container_name: 'redis-insight'
+    restart: always
+    ports:
+      - '5540:5540'
+    volumes:
+      - redis-insight:/data
+    depends_on:
+      - redis
+
   api:
-    image: atc-challenge:dev
+    image: atc-challenge:development
     build:
       dockerfile: Dockerfile
       context: .
@@ -13,8 +31,13 @@ services:
       - 3000:3000
     environment:
       ATC_BASE_URL: http://mock:4000
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+    depends_on:
+      - redis
+
   mock:
-    image: atc-challenge:dev
+    image: atc-challenge:development
     command: node /usr/src/app/mock/server.js
     volumes:
       - ./mock:/usr/src/app/mock
@@ -22,5 +45,11 @@ services:
       - 4000:4000
     environment:
       EVENT_INTERVAL_SECONDS: 10
-      REQUESTS_PER_MINUTE: 60
+      REQUESTS_PER_MINUTE: 20
       EVENT_PUBLISHER_URL: http://api:3000/events
+    depends_on:
+      - api
+
+volumes:
+  redis_data:
+  redis-insight:

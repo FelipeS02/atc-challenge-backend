@@ -36,7 +36,13 @@ export class HTTPAlquilaTuCanchaClient implements IAlquilaTuCanchaClient {
   }
 
   async createJob(params: AtcClientJob): Promise<Job<AtcClientJob>> {
-    return await this.apiQueue.add(ATC_CLIENT_JOB, params);
+    return await this.apiQueue.add(ATC_CLIENT_JOB, params, {
+      attempts: Number.MAX_SAFE_INTEGER,
+      backoff: {
+        delay: 350,
+        type: 'exponential',
+      },
+    });
   }
 
   // Error propagation must be managed from domain

@@ -78,7 +78,9 @@ export class SlotsService {
           this.logger.verbose(
             `Added slot for ${availableSlot.datetime} in court ${courtId}`,
           );
+
           await this.cacheService.del(slotAvailableFlagKey);
+
           const indexToInsert = cachedSlots.findIndex((s) =>
             isBefore(
               parseSlotDatetime(availableSlot.datetime),
