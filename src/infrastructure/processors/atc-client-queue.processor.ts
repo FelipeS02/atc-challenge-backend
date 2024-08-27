@@ -11,21 +11,14 @@ import { AtcClientJob } from '../models/atc-client-job.model';
 @Injectable()
 @Processor(ATC_CLIENT_QUEUE)
 export class ApiRequestProcessor {
-  private throttleDelayUnity = 2000;
-  private throttleDelayTotal = this.throttleDelayUnity;
-  private firstJob = true;
-
   private readonly logger = new Logger(ApiRequestProcessor.name);
 
   constructor(
     @InjectQueue(ATC_CLIENT_QUEUE) private readonly queue: Queue<AtcClientJob>,
     private readonly httpService: HttpService,
-  ) {}
-
-  // Timeout to continue when API reached its request limit
-  async handleRequestsThrottle() {
-    await new Promise((resolve) =>
-      setTimeout(resolve, this.throttleDelayTotal),
+  ) {
+    this.queue.on('stalled', (job: Job) =>
+      this.logger.warn(`[${job.id}] STALLED`),
     );
   }
 
@@ -33,21 +26,14 @@ export class ApiRequestProcessor {
   async handleApiCall(job: Job<AtcClientJob>) {
     const { endpoint, params, method } = job.data;
     try {
-      this.logger.log(`Queue job for ${endpoint} created`);
-
-      // If is the first queue job it means the API is throttling
-      const queueLength = await this.queue.count();
-      if (queueLength === 1 && this.firstJob) {
-        await this.handleRequestsThrottle();
-        this.firstJob = false;
-      }
+      this.logger.log(`[${job.id}] Executing - attemp ${job.attemptsMade + 1}`);
 
       const response = await this.httpService.axiosRef(endpoint, {
         params,
         method,
       });
 
-      this.throttleDelayTotal = this.throttleDelayUnity;
+      this.logger.log(`[${job.id}] Completed`);
 
       return response.data;
     } catch (error) {
@@ -57,12 +43,8 @@ export class ApiRequestProcessor {
 
       // Too many requests
       if (isApiLimitReached(error)) {
-        if (this.throttleDelayTotal < this.throttleDelayUnity * 4)
-          this.throttleDelayTotal += this.throttleDelayUnity;
-
-        await this.handleRequestsThrottle();
-
-        await job.retry();
+        this.logger.log(`[${job.id}] Retrying`);
+        return await job.retry();
       } else {
         await job.moveToFailed({
           message,
