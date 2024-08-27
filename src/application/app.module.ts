@@ -35,19 +35,20 @@ import { ZonesService } from './services/atc-client-service/zones.service';
       inject: [ConfigService],
       useFactory: async (configService: ConfigService) => ({
         store: redisStore,
-        host: configService.get<string>('REDIS_HOST'),
-        port: configService.get<number>('REDIS_PORT'),
+        host: configService.get<string>('REDIS_HOST') ?? 'redis',
+        port: configService.get<number>('REDIS_PORT') ?? 6739,
       }),
     }),
 
     // Queue config
     BullModule.forRootAsync({
-      inject: [ConfigService],
       imports: [ConfigModule],
+      inject: [ConfigService],
       useFactory: async (configService: ConfigService) => ({
         redis: {
-          host: configService.get<string>('REDIS_HOST'),
-          port: configService.get<number>('REDIS_PORT'),
+          store: redisStore,
+          host: configService.get<string>('REDIS_HOST') ?? 'redis',
+          port: configService.get<number>('REDIS_PORT') ?? 6739,
         },
       }),
     }),
