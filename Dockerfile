@@ -12,7 +12,14 @@ RUN yarn install
 
 COPY --chown=node:node . .
 
+FROM redis
+
+COPY redis.conf /usr/local/etc/redis/redis.conf
+
+CMD [ "redis-server", "/usr/local/etc/redis/redis.conf" ]
+
 USER node
+
 
 ###################
 # BUILD FOR PRODUCTION

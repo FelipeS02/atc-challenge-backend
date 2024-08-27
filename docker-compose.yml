@@ -7,6 +7,17 @@ services:
     volumes:
       - redis_data:/data
 
+  redis-insight:
+    image: 'redis/redisinsight:latest'
+    container_name: 'redis-insight'
+    restart: always
+    ports:
+      - '5540:5540'
+    volumes:
+      - redis-insight:/data
+    depends_on:
+      - redis
+
   api:
     image: atc-challenge:development
     build:
@@ -34,10 +45,11 @@ services:
       - 4000:4000
     environment:
       EVENT_INTERVAL_SECONDS: 10
-      REQUESTS_PER_MINUTE: 60
+      REQUESTS_PER_MINUTE: 20
       EVENT_PUBLISHER_URL: http://api:3000/events
     depends_on:
       - api
 
 volumes:
   redis_data:
+  redis-insight:
