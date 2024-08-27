@@ -97,18 +97,15 @@ fastify.get(
 
 ## Como iniciar el proyecto
 
-- Descargar redis para Windows desde [Github](https://github.com/microsoftarchive/redis/releases)
-- Ejecutar en PowerShell
-
-```
-cd "C:\Program Files\Redis"
-```
-
-```
-.\redis-server.exe --port 6380
-```
-
-- Iniciar API y API mock
+- Instalar [Docker](https://www.docker.com/products/docker-desktop/)
+- Ejecutar el siguiente comando para instalar el servicio de redis en la pc
+  ```console
+  $ docker pull redis/redis-stack-server:latest
+  ```
+- Iniciar los contenedores de docker
+  ```console
+  $ docker compose up --build
+  ```
 
 ## Documentación
 
@@ -149,5 +146,3 @@ Debajo, tendrán la documentación consultada para realizar la solución plantea
 
 Se realizaron testeos sobre los servicios de eventos, sin embargo, fueron omitidos por su complejidad los testeos en los handlers de busquedas
 
-### 2. Docker
-La creacion de imagenes en docker no pudo ser testeada debido a un error de permisos desconocido, independientemente de la gran variedad de soluciones aplicadas en los archivos de configuracion
